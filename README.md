@@ -3,7 +3,7 @@
 一个基于 `FastAPI + LLM API + RAG` 的个人智能助手对话系统，支持多轮对话、自动路由、联网搜索、文档问答、会话记忆和轻量部署。
 
 这个项目更偏向一个适合学习和展示的 **LLM 应用 / 基础 Agent 实践项目**：它不是只做单轮聊天，而是把对话、搜索、文档检索和历史记忆串成了一条完整链路。
-![Uploading image.png…]()
+<img width="2229" height="1215" alt="image" src="https://github.com/user-attachments/assets/0bff375a-06be-4459-a81c-f86f3299ff0f" />
 
 ## 项目特点
 
