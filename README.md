@@ -1,4 +1,4 @@
-# Personal Assistant Dialogue System
+# 个人智能助手-对话、检索系统
 
 一个基于 `FastAPI + LLM API + RAG` 的个人智能助手对话系统，支持多轮对话、自动路由、联网搜索、文档问答、会话记忆和轻量部署。
 
