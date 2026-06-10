@@ -562,6 +562,18 @@ async function handleCreateConversation() {
   render();
 }
 
+async function ensureActiveConversation() {
+  if (state.currentConversationId) {
+    return state.currentConversationId;
+  }
+
+  const data = await createConversation(state.user.id);
+  state.currentConversationId = data.conversation_id;
+  localStorage.setItem("conversation_id", String(state.currentConversationId));
+  await refreshConversations(false);
+  return state.currentConversationId;
+}
+
 async function handleUploadFile(event) {
   const file = event.target.files?.[0];
   if (!file || !state.currentConversationId) {
@@ -620,32 +632,34 @@ async function handleSendMessage(event) {
   const errorEl = document.getElementById("composer-error");
   const text = input.value.trim();
 
-  if (!text || !state.currentConversationId || state.isLoading) {
+  if (!text || state.isLoading) {
     return;
   }
 
   errorEl.classList.add("hidden");
-  state.sources = [];
-  state.thinkingVisible = true;
-  state.thinkingStatus = "正在思考中...";
-  state.thinkingLogs = [
-    {
-      label: "状态",
-      content: "正在思考中...",
-    },
-  ];
-  state.isLoading = true;
-  pushMessage({ sender: "user", content: text });
-  pushMessage({
-    sender: "assistant",
-    content: "正在思考中...",
-    pending: true,
-  });
-  render();
-  scrollMessagesToBottom();
-  input.value = "";
 
   try {
+    await ensureActiveConversation();
+    state.sources = [];
+    state.thinkingVisible = true;
+    state.thinkingStatus = "正在思考中...";
+    state.thinkingLogs = [
+      {
+        label: "状态",
+        content: "正在思考中...",
+      },
+    ];
+    state.isLoading = true;
+    pushMessage({ sender: "user", content: text });
+    pushMessage({
+      sender: "assistant",
+      content: "正在思考中...",
+      pending: true,
+    });
+    render();
+    scrollMessagesToBottom();
+    input.value = "";
+
     const response = await streamAgentChat(
       [{ role: "user", content: text }],
       state.user.id,

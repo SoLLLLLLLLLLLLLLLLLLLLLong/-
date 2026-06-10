@@ -817,3 +817,188 @@ a {
     max-width: 100%;
   }
 }
+
+/* Minimal white refinement: flatter surfaces, fewer rounded corners, less filled color */
+.shell.app-layout {
+  padding: 12px;
+  gap: 12px;
+  background: #f8fbff;
+}
+
+.app-layout .sidebar,
+.app-layout .main {
+  background: #ffffff;
+  border: 1px solid #e8eef5;
+  box-shadow: 0 10px 24px rgba(70, 106, 155, 0.05);
+}
+
+.app-layout .sidebar {
+  border-radius: 16px;
+}
+
+.app-layout .main {
+  border-radius: 18px;
+}
+
+.app-layout .brand,
+.app-layout .chat-topbar,
+.app-layout .composer-wrap {
+  background: #ffffff;
+}
+
+.app-layout .brand {
+  border-bottom: 1px solid #edf2f7;
+}
+
+.app-layout .brand h1,
+.app-layout .chat-title h2 {
+  color: #173a63;
+}
+
+.app-layout .brand p,
+.app-layout .chat-title .muted,
+.app-layout .history-item-meta,
+.app-layout .thinking-panel-status,
+.app-layout .thinking-label,
+.app-layout .attachment-banner-label,
+.app-layout .weather-meta,
+.app-layout .weather-text,
+.app-layout .status-pill,
+.app-layout .empty-state p {
+  color: #73879f;
+}
+
+.app-layout .history {
+  padding: 8px 12px 16px;
+}
+
+.app-layout .history-item {
+  border-radius: 12px;
+  border: 1px solid #edf2f7;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.app-layout .history-item.active {
+  background: #f9fbfd;
+  border-color: #dfe8f2;
+  box-shadow: none;
+}
+
+.app-layout .chat-topbar {
+  padding: 20px 26px 18px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.app-layout .messages {
+  padding: 24px 28px 12px;
+  gap: 14px;
+  background: #ffffff;
+}
+
+.app-layout .message {
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.app-layout .message.user {
+  background: #f4f8fc;
+  border-color: #e3edf8;
+  color: #173d69;
+}
+
+.app-layout .message.assistant {
+  background: #ffffff;
+  border-color: #e7eef5;
+  color: #1f3247;
+}
+
+.app-layout .message.system {
+  background: #fafcfe;
+  border-color: #dbe5ef;
+  color: #667c95;
+}
+
+.app-layout .message-link {
+  background: #ffffff;
+  border: 1px solid #e8eef5;
+  border-radius: 10px;
+}
+
+.app-layout .composer-wrap {
+  padding: 16px 26px 24px;
+  border-top: 1px solid #edf2f7;
+}
+
+.app-layout .thinking-panel,
+.app-layout .attachment-banner,
+.app-layout .weather-cloud,
+.app-layout .empty-state,
+.app-layout .composer {
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.app-layout .thinking-panel {
+  border: 1px solid #e7eef5;
+  border-radius: 12px;
+}
+
+.app-layout .thinking-panel-head {
+  border-bottom: 1px solid #eef3f7;
+}
+
+.app-layout .attachment-banner {
+  border: 1px solid #e8eef5;
+  border-radius: 12px;
+}
+
+.app-layout .status-pill {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.app-layout .composer {
+  border: 1px solid #e7eef5;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.app-layout .composer textarea {
+  background: #ffffff;
+  border: 1px solid #e3ebf4;
+  border-radius: 10px;
+}
+
+.app-layout .empty-state {
+  border: 1px solid #edf2f7;
+  border-radius: 14px;
+  padding: 30px;
+}
+
+.app-layout .weather-cloud {
+  border: 1px solid #e8eef5;
+  border-radius: 12px;
+  min-width: 210px;
+}
+
+.app-layout .weather-city,
+.app-layout .attachment-banner-name,
+.app-layout .history-item-title,
+.app-layout .thinking-panel-title {
+  color: #23476e;
+}
+
+@media (max-width: 960px) {
+  .shell.app-layout {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .app-layout .sidebar,
+  .app-layout .main {
+    border-radius: 14px;
+  }
+}
