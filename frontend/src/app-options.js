@@ -1,4 +1,4 @@
-﻿import { createApp, nextTick } from "https://cdn.jsdelivr.net/npm/vue@3.5.18/dist/vue.esm-browser.prod.js";
+﻿import { nextTick } from "vue";
 import {
   createConversation,
   deleteConversation,
@@ -11,7 +11,7 @@ import {
   renameConversation,
   streamAgentChat,
   uploadKnowledgeFile,
-} from "./api.js";
+} from "./api/client.js";
 
 const CURRENT_USER_CITY_KEY = "CURRENT_USER_CITY";
 const GENERATION_TIMEOUT_MS = 120000;
@@ -40,7 +40,7 @@ function saveCachedCity(city) {
   localStorage.setItem(CURRENT_USER_CITY_KEY, next);
 }
 
-createApp({
+export default {
   data() {
     return {
       token: localStorage.getItem("token") || "",
@@ -796,4 +796,5 @@ createApp({
       </main>
     </div>
   `,
-}).mount("#app");
+};
+
