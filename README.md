@@ -2,11 +2,8 @@
 
 一个基于 `Vue 3 + Vite + FastAPI + SQLite + FAISS` 的个人智能助手 Web 问答系统，支持多轮对话、会话管理、文件上传、联网搜索、文档检索、流式回复与会话记忆。
 
-这个项目当前更适合用于：
+<img width="2229" height="1215" alt="image" src="https://github.com/user-attachments/assets/1d7f9061-aa30-462e-8308-0caab20d2b2b" />
 
-- 前端 / 全栈开发实习项目展示
-- 大模型 Web 应用开发练习
-- RAG 与多轮对话系统的基础工程实践
 
 ## 项目概览
 
