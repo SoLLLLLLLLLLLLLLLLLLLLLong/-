@@ -1,5 +1,7 @@
-<script>
-import appOptions from "./app-options.js";
+<template>
+  <RouterView />
+</template>
 
-export default appOptions;
+<script setup>
+import { RouterView } from "vue-router";
 </script>

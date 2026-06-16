@@ -820,39 +820,46 @@ a {
 
 /* Minimal white refinement: flatter surfaces, fewer rounded corners, less filled color */
 .shell.app-layout {
-  padding: 12px;
-  gap: 12px;
-  background: #f8fbff;
+  padding: 16px;
+  gap: 16px;
+  background:
+    radial-gradient(circle at top left, rgba(233, 242, 255, 0.92), transparent 24%),
+    radial-gradient(circle at top right, rgba(244, 248, 255, 0.88), transparent 26%),
+    linear-gradient(180deg, #f6f8fc 0%, #f3f6fb 100%);
 }
 
 .app-layout .sidebar,
 .app-layout .main {
-  background: #ffffff;
-  border: 1px solid #e8eef5;
-  box-shadow: 0 10px 24px rgba(70, 106, 155, 0.05);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(223, 232, 243, 0.95);
+  box-shadow:
+    0 18px 40px rgba(24, 39, 75, 0.05),
+    0 2px 10px rgba(24, 39, 75, 0.03);
+  backdrop-filter: blur(18px);
 }
 
 .app-layout .sidebar {
-  border-radius: 16px;
+  border-radius: 22px;
 }
 
 .app-layout .main {
-  border-radius: 18px;
+  border-radius: 24px;
 }
 
 .app-layout .brand,
 .app-layout .chat-topbar,
 .app-layout .composer-wrap {
-  background: #ffffff;
+  background: transparent;
 }
 
 .app-layout .brand {
-  border-bottom: 1px solid #edf2f7;
+  padding: 26px 24px 18px;
+  border-bottom: 1px solid rgba(233, 239, 246, 0.96);
 }
 
 .app-layout .brand h1,
 .app-layout .chat-title h2 {
-  color: #173a63;
+  color: #183b66;
 }
 
 .app-layout .brand p,
@@ -865,69 +872,82 @@ a {
 .app-layout .weather-text,
 .app-layout .status-pill,
 .app-layout .empty-state p {
-  color: #73879f;
+  color: #71839b;
 }
 
 .app-layout .history {
-  padding: 8px 12px 16px;
+  padding: 10px 14px 18px;
 }
 
 .app-layout .history-item {
-  border-radius: 12px;
-  border: 1px solid #edf2f7;
-  background: #ffffff;
-  box-shadow: none;
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid rgba(230, 236, 244, 0.96);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 252, 255, 0.95));
+  box-shadow: 0 6px 18px rgba(37, 55, 92, 0.04);
 }
 
 .app-layout .history-item.active {
-  background: #f9fbfd;
-  border-color: #dfe8f2;
-  box-shadow: none;
+  border-color: #cfddf0;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
+  box-shadow: 0 14px 28px rgba(37, 55, 92, 0.08);
+}
+
+.app-layout .history-item.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #295987 0%, #4f7fad 100%);
 }
 
 .app-layout .chat-topbar {
-  padding: 20px 26px 18px;
-  border-bottom: 1px solid #edf2f7;
+  padding: 24px 30px 20px;
+  border-bottom: 1px solid rgba(233, 239, 246, 0.96);
 }
 
 .app-layout .messages {
-  padding: 24px 28px 12px;
-  gap: 14px;
-  background: #ffffff;
+  padding: 30px 34px 18px;
+  gap: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(248, 251, 255, 0.16));
 }
 
 .app-layout .message {
-  border-radius: 12px;
-  box-shadow: none;
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(32, 50, 84, 0.05);
 }
 
 .app-layout .message.user {
-  background: #f4f8fc;
-  border-color: #e3edf8;
-  color: #173d69;
+  background: linear-gradient(135deg, #edf4fc 0%, #f7fbff 100%);
+  border-color: #d8e6f4;
+  color: #193b65;
 }
 
 .app-layout .message.assistant {
-  background: #ffffff;
-  border-color: #e7eef5;
-  color: #1f3247;
+  background: rgba(255, 255, 255, 0.98);
+  border-color: #e5ebf2;
+  color: #22354b;
 }
 
 .app-layout .message.system {
-  background: #fafcfe;
-  border-color: #dbe5ef;
-  color: #667c95;
+  background: linear-gradient(180deg, #f9fbfe 0%, #f5f8fc 100%);
+  border-color: #dde6f0;
+  color: #677b94;
 }
 
 .app-layout .message-link {
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid #e8eef5;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .app-layout .composer-wrap {
-  padding: 16px 26px 24px;
-  border-top: 1px solid #edf2f7;
+  padding: 20px 30px 28px;
+  border-top: 1px solid rgba(233, 239, 246, 0.96);
 }
 
 .app-layout .thinking-panel,
@@ -935,53 +955,61 @@ a {
 .app-layout .weather-cloud,
 .app-layout .empty-state,
 .app-layout .composer {
-  background: #ffffff;
-  box-shadow: none;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 24px rgba(32, 50, 84, 0.04);
 }
 
 .app-layout .thinking-panel {
-  border: 1px solid #e7eef5;
-  border-radius: 12px;
+  border: 1px solid #e6edf5;
+  border-radius: 18px;
 }
 
 .app-layout .thinking-panel-head {
   border-bottom: 1px solid #eef3f7;
+  background: linear-gradient(180deg, rgba(248, 251, 255, 0.95), rgba(255, 255, 255, 0.75));
 }
 
 .app-layout .attachment-banner {
   border: 1px solid #e8eef5;
-  border-radius: 12px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(248, 251, 255, 0.96), rgba(255, 255, 255, 0.92));
 }
 
 .app-layout .status-pill {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  border-radius: 0;
+  border: 1px solid #e7edf4;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 7px 12px;
+  border-radius: 999px;
 }
 
 .app-layout .composer {
-  border: 1px solid #e7eef5;
-  border-radius: 14px;
-  padding: 14px;
+  border: 1px solid #e5ebf2;
+  border-radius: 20px;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.92));
 }
 
 .app-layout .composer textarea {
-  background: #ffffff;
-  border: 1px solid #e3ebf4;
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #dfe8f2;
+  border-radius: 14px;
+  min-height: 124px;
 }
 
 .app-layout .empty-state {
-  border: 1px solid #edf2f7;
-  border-radius: 14px;
-  padding: 30px;
+  border: 1px solid #e8eef5;
+  border-radius: 24px;
+  padding: 34px 36px;
+  background:
+    radial-gradient(circle at top right, rgba(236, 244, 255, 0.9), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 252, 255, 0.95));
 }
 
 .app-layout .weather-cloud {
-  border: 1px solid #e8eef5;
-  border-radius: 12px;
-  min-width: 210px;
+  border: 1px solid #e4ebf3;
+  border-radius: 18px;
+  min-width: 220px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 255, 0.94));
 }
 
 .app-layout .weather-city,
@@ -991,14 +1019,50 @@ a {
   color: #23476e;
 }
 
+.app-layout .btn {
+  border: 1px solid #dde6f0;
+  background: rgba(255, 255, 255, 0.92);
+  color: #21496f;
+  box-shadow: 0 8px 18px rgba(32, 50, 84, 0.04);
+}
+
+.app-layout .btn-primary {
+  background: linear-gradient(135deg, #21496f 0%, #2e5f8d 100%);
+  border-color: rgba(33, 73, 111, 0.36);
+  color: #f8fbff;
+  box-shadow: 0 12px 24px rgba(33, 73, 111, 0.18);
+}
+
+.app-layout .btn-ghost {
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.app-layout .btn-danger {
+  background: rgba(255, 253, 254, 0.92);
+  color: #b04a62;
+  border-color: #e8d7dc;
+}
+
+.app-layout .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(32, 50, 84, 0.08);
+}
+
 @media (max-width: 960px) {
   .shell.app-layout {
-    padding: 10px;
-    gap: 10px;
+    padding: 12px;
+    gap: 12px;
   }
 
   .app-layout .sidebar,
   .app-layout .main {
-    border-radius: 14px;
+    border-radius: 18px;
+  }
+
+  .app-layout .messages,
+  .app-layout .chat-topbar,
+  .app-layout .composer-wrap {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }
