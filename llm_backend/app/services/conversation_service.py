@@ -14,6 +14,11 @@ logger = get_logger(service="conversation")
 
 
 class ConversationService:
+    # 这个 service 负责“会话和历史消息”这条主线：
+    # - 创建会话
+    # - 读取历史消息
+    # - 保存每轮用户消息和 AI 回复
+    # - 在消息过多时做摘要压缩，减少后续上下文长度
     SUMMARY_SYSTEM_PROMPT = (
         "You maintain long-term conversation memory for an assistant. "
         "Merge older dialogue into a concise summary in Chinese. "
@@ -44,6 +49,8 @@ class ConversationService:
 
     @staticmethod
     async def create_conversation(user_id: int) -> int:
+        # 新建会话时只先落一条 Conversation 记录。
+        # 具体消息内容要等用户真正发问后，再通过 save_message 写入。
         async with AsyncSessionLocal() as db:
             conversation = Conversation(
                 user_id=user_id,
@@ -77,6 +84,12 @@ class ConversationService:
         conversation_id: int,
         incoming_messages: List[Dict],
     ) -> List[Dict]:
+        # 这个方法的作用是“拼最终发给大模型的上下文”。
+        # 它会把：
+        # 1. 已有摘要 summary
+        # 2. 最近几轮未被摘要压缩的消息
+        # 3. 当前用户最新输入
+        # 合并成一份 hydrated_messages。
         async with AsyncSessionLocal() as db:
             conversation = await ConversationService._load_conversation(db, conversation_id)
             if not conversation:
@@ -148,6 +161,8 @@ class ConversationService:
 
     @staticmethod
     async def _refresh_summary_if_needed(db, conversation: Conversation) -> None:
+        # 当历史消息累计到一定数量时，
+        # 把较早的消息压缩成 summary，保留最近几轮原始消息。
         stored_messages = await ConversationService._load_messages(db, conversation.id)
         total_messages = len(stored_messages)
         keep_recent = settings.MEMORY_KEEP_RECENT_MESSAGES
@@ -181,6 +196,8 @@ class ConversationService:
         messages: List[Dict],
         response: str,
     ):
+        # 每轮问答完成后，把“用户问题 + AI 最终回答”一起写进数据库。
+        # 这一步完成以后，前端刷新页面或重新登录时才能把历史消息再查回来。
         try:
             async with AsyncSessionLocal() as db:
                 conversation = await ConversationService._load_conversation(db, conversation_id)
@@ -252,6 +269,8 @@ class ConversationService:
 
     @staticmethod
     async def get_conversation_messages(conversation_id: int, user_id: int) -> List[Dict]:
+        # 历史消息查询会校验“这条会话是否属于当前用户”，
+        # 避免用户读到不属于自己的会话数据。
         async with AsyncSessionLocal() as db:
             stmt = select(Conversation).where(
                 Conversation.id == conversation_id,
@@ -275,6 +294,47 @@ class ConversationService:
                 }
                 for msg in messages
             ]
+
+    @staticmethod
+    async def truncate_messages_from(
+        conversation_id: int,
+        user_id: int,
+        message_id: int,
+    ) -> None:
+        async with AsyncSessionLocal() as db:
+            stmt = select(Conversation).where(
+                Conversation.id == conversation_id,
+                Conversation.user_id == user_id,
+            )
+            result = await db.execute(stmt)
+            conversation = result.scalar_one_or_none()
+            if not conversation:
+                raise ValueError(
+                    f"Conversation {conversation_id} not found or not owned by user {user_id}"
+                )
+
+            target_stmt = select(Message).where(
+                Message.id == message_id,
+                Message.conversation_id == conversation_id,
+            )
+            target_result = await db.execute(target_stmt)
+            target = target_result.scalar_one_or_none()
+            if not target:
+                raise ValueError(f"Message {message_id} not found")
+
+            delete_stmt = select(Message).where(
+                Message.conversation_id == conversation_id,
+                Message.id >= message_id,
+            )
+            delete_result = await db.execute(delete_stmt)
+            for message in delete_result.scalars().all():
+                await db.delete(message)
+
+            conversation.summarized_message_count = min(
+                conversation.summarized_message_count or 0,
+                max(0, message_id - 1),
+            )
+            await db.commit()
 
     @staticmethod
     async def delete_conversation(conversation_id: int):

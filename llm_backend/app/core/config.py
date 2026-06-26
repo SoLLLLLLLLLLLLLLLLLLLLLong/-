@@ -74,6 +74,10 @@ class Settings(BaseSettings):
     MEMORY_SUMMARY_TRIGGER_MESSAGES: int = 12
     MEMORY_KEEP_RECENT_MESSAGES: int = 8
     MEMORY_SUMMARY_MIN_MESSAGES: int = 4
+    ASSISTANT_MODEL_PLACEHOLDER: str = "env:CHAT_MODEL_NAME"
+    ASSISTANT_TEMPERATURE: float = 0.7
+    ASSISTANT_ENABLE_WEB_SEARCH: bool = True
+    ASSISTANT_RESPONSE_STYLE: str = "balanced"
 
     @property
     def DATABASE_URL(self) -> str:

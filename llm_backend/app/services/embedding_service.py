@@ -15,6 +15,8 @@ from app.core.config import settings
 
 
 class EmbeddingService:
+    # 这个 service 负责 RAG 里的“文本 -> 向量 -> 索引 -> 检索”主链路。
+    # 文档上传后会先调用这里创建索引，问答时再调用这里做相似度检索。
     def __init__(self):
         self.index_dir = Path("indexes")
         self.index_dir.mkdir(exist_ok=True)
@@ -193,6 +195,11 @@ class EmbeddingService:
         ]
 
     async def create_embeddings(self, file_path: str) -> Dict:
+        # 文档入库时的核心步骤：
+        # 1. 读取文件文本并切分成 chunks
+        # 2. 调 embedding 模型把文本变成向量
+        # 3. 用 FAISS 建索引
+        # 4. 把索引文件和文档元数据一起保存到本地
         text_chunks = self._read_chunks(file_path)
         if not text_chunks:
             raise ValueError("未能从文档中提取可用文本内容。")
@@ -223,6 +230,8 @@ class EmbeddingService:
             json.dump(documents, file_obj, ensure_ascii=False, indent=2)
 
     def _load_index(self, index_id: str):
+        # 根据 index_id 反查本地索引文件和文档元数据。
+        # current_index / current_documents 会在后续 search 里直接复用。
         file_id = index_id.replace("index_", "")
         index_path = self.index_dir / f"index_{file_id}.bin"
         docs_path = self.index_dir / f"docs_{file_id}.json"
@@ -239,6 +248,10 @@ class EmbeddingService:
             raise ValueError("知识库索引为空。")
 
     async def search(self, query: str, top_k: int = 3) -> List[dict]:
+        # 搜索流程：
+        # 1. 把用户 query 转成向量
+        # 2. 和当前 FAISS 索引做相似度搜索
+        # 3. 把命中的文本片段和元数据组装回结果列表
         if self.current_index is None:
             raise ValueError("索引尚未加载。")
 
@@ -272,5 +285,7 @@ class EmbeddingService:
         return results
 
     async def search_index(self, index_id: str, query: str, top_k: int = 3) -> List[dict]:
+        # 这是给上层 service 用的更完整入口：
+        # 先加载指定索引，再执行真正的 search。
         self._load_index(index_id)
         return await self.search(query, top_k=top_k)

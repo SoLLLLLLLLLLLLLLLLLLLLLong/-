@@ -12,7 +12,7 @@
         @delete="$emit('delete', $event)"
       />
     </template>
-    <div v-else class="history-empty">还没有历史会话。</div>
+    <div v-else class="history-empty">没有匹配的会话。</div>
   </div>
 </template>
 

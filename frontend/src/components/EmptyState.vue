@@ -1,4 +1,8 @@
 <template>
+  <!--
+    当前会话里还没有任何消息时，显示默认欢迎说明。
+    这属于聊天产品里常见的 empty state 设计。
+  -->
   <div class="empty-state">
     <h3>您好，我是个人智能助手</h3>
     <p>

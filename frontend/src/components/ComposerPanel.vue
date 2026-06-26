@@ -1,25 +1,28 @@
 <template>
   <div class="composer-wrap">
+    <!-- 这两条状态说明只是给用户看的提示，不参与真实业务逻辑。 -->
     <div class="status-strip">
-      <span class="status-pill">记忆：最近消息 + summary 长期记忆</span>
+      <span class="status-pill">记忆：最近消息 + 长期偏好记忆</span>
       <span class="status-pill">上传 PDF / DOCX / TXT 后可直接围绕文档提问</span>
     </div>
 
+    <!-- 当前会话如果已经绑定附件，就在输入区上方显示。 -->
     <div v-if="currentAttachment" class="attachment-banner">
-      <span class="attachment-banner-label">当前已关联文档</span>
+      <span class="attachment-banner-label">当前已关联附件</span>
       <span class="attachment-banner-name" :title="currentAttachment.filename">
         {{ currentAttachment.filename }}
       </span>
       <button
         class="attachment-banner-remove"
         type="button"
-        aria-label="移除当前文档"
+        aria-label="移除当前附件"
         @click="$emit('remove-attachment')"
       >
         ×
       </button>
     </div>
 
+    <!-- 表单提交不会刷新页面，而是交给上层触发发送逻辑。 -->
     <form class="composer" @submit.prevent="$emit('send')">
       <textarea
         id="composer-input"
@@ -29,8 +32,10 @@
         @input="$emit('update:composerInput', $event.target.value)"
         @keydown="$emit('keydown', $event)"
       ></textarea>
+
       <div class="composer-actions">
         <div class="composer-left">
+          <!-- 原生 file input 负责真正选择文件，label 只是更好看的触发按钮。 -->
           <label class="btn btn-ghost" for="upload-input">上传文档</label>
           <input
             id="upload-input"
@@ -40,7 +45,9 @@
             @change="handleFileChange"
           />
         </div>
+
         <div class="composer-right">
+          <!-- 正在生成时，发送按钮会切换成“停止生成”。 -->
           <button
             v-if="isLoading"
             class="btn btn-danger"
@@ -52,13 +59,16 @@
           <button v-else class="btn btn-primary" type="submit">发送</button>
         </div>
       </div>
+
       <p v-if="composerError" class="error-text">{{ composerError }}</p>
     </form>
   </div>
 </template>
 
 <script setup>
-const props = defineProps({
+// 这个组件是“输入区组件”，只负责输入和局部交互。
+// 真正的消息发送、文件上传、停止生成逻辑都在上层 store 里。
+defineProps({
   composerInput: {
     type: String,
     default: "",
@@ -77,6 +87,12 @@ const props = defineProps({
   },
 });
 
+// update:composerInput：把输入框内容回传给父层
+// remove-attachment：移除当前会话绑定附件
+// send：发送消息
+// keydown：处理回车发送
+// upload：上传文件
+// stop：停止当前流式生成
 const emit = defineEmits([
   "update:composerInput",
   "remove-attachment",
@@ -89,6 +105,8 @@ const emit = defineEmits([
 function handleFileChange(event) {
   const file = event.target.files?.[0] || null;
   emit("upload", file);
+
+  // 清空 input，后续才能重复选择同名文件。
   event.target.value = "";
 }
 </script>

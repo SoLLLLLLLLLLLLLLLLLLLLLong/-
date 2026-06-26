@@ -33,14 +33,19 @@ async def get_current_user(
 
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
-        if not email:
+        subject = payload.get("sub")
+        if not subject:
             raise credentials_exception
     except JWTError as exc:
         raise credentials_exception from exc
 
-    user_service = UserService(db)
-    user = await user_service.get_user_by_email(email)
+    # 当前项目里 token 的 sub 统一保存用户 id，避免邮箱变更后 token 失效。
+    try:
+        user_id = int(subject)
+    except (TypeError, ValueError) as exc:
+        raise credentials_exception from exc
+
+    user = await UserService.get_user_by_id(db, user_id)
     if user is None:
         raise credentials_exception
     return user

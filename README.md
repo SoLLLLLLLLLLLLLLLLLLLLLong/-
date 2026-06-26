@@ -1,318 +1,113 @@
 # 基于大模型的个人智能助手 Web 问答系统
 
-一个基于 `Vue 3 + Vite + FastAPI + SQLite + FAISS` 的个人智能助手 Web 问答系统，支持多轮对话、会话管理、文件上传、联网搜索、文档检索、流式回复与会话记忆。
+这是一个前后端分离的多轮对话系统，定位是“个人智能助手 / 问答系统”，不是纯聊天 Demo。  
+系统支持用户注册登录、会话管理、历史消息持久化、文件上传、文档检索、联网搜索、天气查询、工作区检索，以及基于大模型的自动路由问答。
 
-<img width="2229" height="1215" alt="image" src="https://github.com/user-attachments/assets/1d7f9061-aa30-462e-8308-0caab20d2b2b" />
+当前项目已经从单一自动路由升级为轻量多 Agent 工作流：
 
+- `Router Agent`：先判断本轮问题应该走普通回答、联网搜索、文档检索、工作区检索还是混合检索
+- `Research Agent`：根据路由结果执行工具，拿外部证据并整理结果
+- `Code Agent`：当问题偏代码场景时，额外检查代码回答是否合理，并尝试用 `black / prettier` 自动格式化代码块
+- `Response Agent`：统一整合计划、证据、代码检查结果和上下文，生成最终回答
+- `Memory Agent`：从用户对话里抽取偏好，写入长期记忆
 
-## 项目概览
-
-系统分为两部分：
-
-- 前端：基于 `Vue 3 + Vite + Vue Router + JavaScript` 实现页面、交互与前后端联调
-- 后端：基于 `FastAPI + SQLite` 提供用户、会话、消息、文件上传、天气、流式问答等接口能力
-
-在业务能力上，系统支持：
-
-- 用户登录与注册
-- 多会话管理
-- 历史消息持久化
-- 文件上传与知识库问答
-- 普通问答、联网搜索、文档检索三类问答场景
-- 流式回复与生成中断
-- 多轮对话记忆与历史摘要压缩
-
----
-
-## 前端实现
-
-前端工程位于 `frontend/` 目录，采用标准的 `Vue 3 + Vite` 工程结构，已经拆分为页面、组件、路由与组合式逻辑。
-
-### 前端技术栈
-
-- `Vue 3`
-- `Vite`
-- `Vue Router`
-- `JavaScript`
-- `CSS`
-
-### 前端主要功能
-
-- 登录页与聊天页分离
-- 基于路由实现页面跳转
-- 会话列表展示、切换、重命名、删除
-- 消息列表展示与自动滚动
-- 支持回车发送消息
-- 文件上传与文档绑定提示
-- 模型思考过程展示
-- 流式输出渲染
-- 停止生成
-- 天气卡片展示
-
-### 前端工程结构
-
-```text
-frontend/
-├─ src/
-│  ├─ api/
-│  │  └─ client.js
-│  ├─ components/
-│  │  ├─ ChatHeader.vue
-│  │  ├─ ComposerPanel.vue
-│  │  ├─ ConversationList.vue
-│  │  ├─ ConversationListItem.vue
-│  │  ├─ EmptyState.vue
-│  │  ├─ MessageList.vue
-│  │  ├─ SidebarPanel.vue
-│  │  ├─ SourcesPanel.vue
-│  │  ├─ ThinkingPanel.vue
-│  │  └─ WeatherCard.vue
-│  ├─ composables/
-│  │  └─ useAssistantApp.js
-│  ├─ pages/
-│  │  ├─ AuthPage.vue
-│  │  └─ ChatPage.vue
-│  ├─ router/
-│  │  └─ index.js
-│  ├─ App.vue
-│  ├─ main.js
-│  └─ styles.css
-├─ index.html
-├─ package.json
-└─ vite.config.js
-```
-
-### 前端设计思路
-
-- 使用 `Vue Router` 将登录页和聊天页拆开，避免所有内容堆在同一个组件里
-- 使用组件化方式拆分会话列表、天气卡片、消息区、思考面板、输入区等模块
-- 使用 `useAssistantApp.js` 统一管理前端核心状态与交互逻辑
-- 使用 `api/client.js` 统一封装接口请求，降低页面与后端的耦合
-- 使用 `AbortController` 实现生成中断
-- 使用流式响应读取实现消息逐段输出
-
-### 前端开发说明
-
-#### 本地开发
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-默认开发地址：
-
-- [http://127.0.0.1:5173](http://127.0.0.1:5173)
-
-#### 前端代理说明
-
-开发环境下，`Vite` 已配置 `/api` 代理：
-
-- 前端地址：`5173`
-- 后端地址：`8000`
-
-因此在 `5173` 页面下调用 `/api/...` 时，请求会自动转发到 `FastAPI` 后端。
-
-#### 构建说明
-
-```bash
-npm run build
-```
-
-执行后会将前端源码打包为浏览器可直接运行的静态文件，并输出到：
-
-- `llm_backend/static/dist`
-
-这样后端启动后，访问 `8000` 就能加载最新的前端页面。
-
-### 前端补充文档
-
-如果想进一步了解前端实现思路，可查看：
-
-- [frontend.md](/D:/GZHU/智能客服Agent/customer%20service/deepseek_agent/frontend.md)
-
----
-
-## 后端实现
-
-后端工程位于 `llm_backend/` 目录，使用 `FastAPI` 提供接口能力，并通过 `SQLite` 实现轻量持久化。
-
-### 后端技术栈
-
-- `Python`
-- `FastAPI`
-- `SQLAlchemy`
-- `Pydantic`
-- `SQLite`
-- `FAISS`
-
-### 后端主要能力
-
-- 用户注册、登录与 JWT 鉴权
-- 会话创建、查询、重命名、删除
-- 历史消息持久化
-- 文件上传与文档解析
-- 向量索引构建与检索
-- 流式问答接口
-- 天气接口封装
-- 自动路由问答
-- 会话记忆与历史摘要压缩
-
-### 后端目录结构
-
-```text
-llm_backend/
-├─ app/
-│  ├─ api/          # 接口路由
-│  ├─ core/         # 配置、数据库、安全等
-│  ├─ models/       # 数据模型
-│  ├─ schemas/      # 请求与响应结构
-│  ├─ services/     # 聊天、搜索、检索、记忆等核心服务
-│  └─ tools/        # 工具能力封装
-├─ logs/
-├─ scripts/
-│  └─ init_db.py
-├─ static/
-│  └─ dist/         # 前端打包产物
-├─ uploads/
-├─ .env
-├─ main.py
-└─ run.py
-```
-
-### 后端问答链路
-
-用户发送问题后，后端大致会经历以下流程：
-
-1. 读取当前会话历史与摘要记忆
-2. 判断当前问题更适合普通问答、联网搜索还是文档检索
-3. 如当前会话绑定了文档，则优先走文档检索链路
-4. 将上下文、检索结果或搜索结果交给大模型生成最终回复
-5. 通过流式接口将回复逐段返回给前端
-6. 回答结束后保存消息并按需更新摘要记忆
-
----
-
-## 当前实现功能
-
-### 1. 用户与会话
+## 核心功能
 
 - 用户注册、登录、鉴权
-- 多会话创建与管理
-- 会话重命名与删除
+- 会话创建、切换、重命名、删除
 - 历史消息持久化
+- 流式问答与中断控制
+- 自动路由问答
+- 联网搜索
+- 基础 RAG 文档问答
+- 工作区文件检索
+- 天气信息查询
+- 执行轨迹 trace 面板
+- 用户画像 / 偏好记忆
+- 代码问答增强与代码块格式化输出
 
-### 2. 问答能力
+## 技术栈
 
-- 普通问答
-- 联网搜索问答
-- 文档检索问答
-- 自动路由切换
+### 前端
 
-### 3. 文档与知识库
+- Vue 3
+- Vite
+- Vue Router
+- Pinia
+- JavaScript
+- Fetch API
+- Markdown 渲染
 
-- 支持上传 `PDF / DOCX / TXT / MD`
-- 文本解析与切分
-- Embedding 生成
-- 本地 `FAISS` 向量索引
-- 文档检索增强生成
+### 后端
 
-### 4. 多轮记忆
+- FastAPI
+- Python
+- SQLite
+- SQLAlchemy
+- FAISS
+- 大模型 API
+- WeatherAPI
 
-- 保留最近消息作为短期上下文
-- 使用历史摘要压缩早期对话
-- 新会话对应独立的记忆上下文
+## 项目结构
 
-### 5. 交互体验
-
-- 思考过程展示
-- 流式回复
-- 停止生成
-- 文件绑定提示
-- 天气信息展示
-
----
+```text
+deepseek_agent/
+├─ frontend/                # Vue 3 前端
+│  ├─ src/api/              # 接口封装
+│  ├─ src/components/       # 页面组件
+│  ├─ src/pages/            # 页面级组件
+│  ├─ src/stores/           # Pinia 状态管理
+│  └─ src/router/           # 路由配置
+├─ llm_backend/             # FastAPI 后端
+│  ├─ app/api/              # 认证等接口
+│  ├─ app/core/             # 配置、数据库、鉴权、中间件
+│  ├─ app/models/           # 数据模型
+│  ├─ app/services/         # 业务服务层
+│  └─ app/tools/            # 工具定义
+└─ README.md
+```
 
 ## 快速开始
 
-## 1. 后端环境准备
-
-推荐 Python 版本：
-
-- `Python 3.10`
-- `Python 3.11`
-
-创建虚拟环境并安装依赖：
+### 1. 安装后端依赖
 
 ```bash
 python -m venv .cs_venv
-```
-
-Windows：
-
-```powershell
-.cs_venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-Linux / macOS：
-
-```bash
 source .cs_venv/bin/activate
 pip install -r requirements.txt
+pip install aiosqlite
 ```
 
-## 2. 配置环境变量
+### 2. 配置环境变量
 
 在 `llm_backend/.env` 中至少配置：
 
 ```env
-CHAT_SERVICE=siliconflow
-REASON_SERVICE=siliconflow
-AGENT_SERVICE=siliconflow
+CHAT_API_KEY=your_key
+CHAT_BASE_URL=https://api.siliconflow.cn/v1
+CHAT_MODEL_NAME=your_model
 
-SILICONFLOW_API_KEY=your_api_key
-SILICONFLOW_BASE_URL=https://api.siliconflow.cn/v1
+AGENT_API_KEY=your_key
+AGENT_BASE_URL=https://api.siliconflow.cn/v1
+AGENT_MODEL_NAME=your_model
 
-DB_TYPE=sqlite
-
-TAVILY_API_KEY=your_tavily_api_key
-
-EMBEDDING_PROVIDER=siliconflow
-EMBEDDING_MODEL=Qwen/Qwen3-Embedding-0.6B
-
-WEATHERAPI_KEY=your_weatherapi_key
-WEATHER_DEFAULT_CITY=Beijing
+WEATHERAPI_KEY=your_weather_api_key
+TAVILY_API_KEY=your_tavily_key
 ```
 
-说明：
+### 3. 启动后端
 
-- `SILICONFLOW_API_KEY` 用于大模型与 Embedding 调用
-- `TAVILY_API_KEY` 用于联网搜索
-- `WEATHERAPI_KEY` 用于天气展示
-- 当前项目使用 `SQLite`，不再依赖 MySQL
-- 当前主链路不依赖 Neo4j 和 GraphRAG
-
-## 3. 初始化数据库
+进入后端目录，安装依赖并启动：
 
 ```bash
 cd llm_backend
-python scripts/init_db.py
-```
-
-## 4. 启动后端
-
-```bash
+pip install -r requirements.txt
 python run.py
 ```
 
-默认地址：
+默认会启动 FastAPI 服务，前端构建产物也可以由后端静态托管。
 
-- 前端页面：[http://127.0.0.1:8000](http://127.0.0.1:8000)
-- 接口文档：[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-
-## 5. 前端开发
+### 2. 启动前端开发环境
 
 ```bash
 cd frontend
@@ -320,52 +115,13 @@ npm install
 npm run dev
 ```
 
-开发地址：
-
-- [http://127.0.0.1:5173](http://127.0.0.1:5173)
-
-## 6. 构建前端到后端静态目录
+### 3. 构建前端
 
 ```bash
 cd frontend
 npm run build
 ```
 
-构建完成后，最新前端会被输出到：
 
-- `llm_backend/static/dist`
-
----
-
-## 项目定位
-
-这个项目属于一个偏前端 / 全栈导向的大模型 Web 应用实践项目，重点体现：
-
-- 前端组件化开发与页面路由管理
-- 前后端接口联调能力
-- 用户系统、会话系统与文件上传等完整业务闭环
-- 流式响应、多轮对话与记忆压缩等交互实现
-- 文档检索增强问答的基础工程落地
-- Linux / Windows 环境下的部署、调试与问题排查
-
----
-
-## 当前简化说明
-
-当前保留的核心模块：
-
-- Vue 前端页面与交互
-- FastAPI 后端接口
-- 普通问答
-- 联网搜索
-- 文档检索问答
-- 会话记忆
-- 文件上传与知识库
-
-## 后续可扩展方向
-
-- 将前端状态进一步拆分为更细粒度的 composable
-- 增加文档管理页与知识库管理页
-- 增加会话搜索、置顶、归档等功能
-- 增加更完整的多 Agent / Workflow 模块
-- 增加单元测试、接口测试与前端构建校验
+如果是开发模式，前端通常运行在 `5173`，通过代理转发到后端接口。  
+如果是构建后交给后端托管，则访问后端地址即可。
