@@ -3,6 +3,9 @@
 这是一个前后端分离的多轮对话系统，定位是“个人智能助手 / 问答系统”，不是纯聊天 Demo。  
 系统支持用户注册登录、会话管理、历史消息持久化、文件上传、文档检索、联网搜索、天气查询、工作区检索，以及基于大模型的自动路由问答。
 
+<img width="2229" height="1215" alt="image" src="https://github.com/user-attachments/assets/2f4f0be4-875b-45f5-8d54-0534be5537f8" />
+<img width="2229" height="1215" alt="aca6db2f-cd95-45fd-af28-24e5e29816bc" src="https://github.com/user-attachments/assets/21140b0f-11bb-4156-9499-48e567f0781d" />
+
 当前项目已经从单一自动路由升级为轻量多 Agent 工作流：
 
 - `Router Agent`：先判断本轮问题应该走普通回答、联网搜索、文档检索、工作区检索还是混合检索
