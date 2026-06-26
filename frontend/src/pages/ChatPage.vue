@@ -52,21 +52,19 @@
 </template>
 
 <script setup>
-import { onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import ChatHeader from "../components/ChatHeader.vue";
 import ComposerPanel from "../components/ComposerPanel.vue";
 import MessageList from "../components/MessageList.vue";
 import SidebarPanel from "../components/SidebarPanel.vue";
 import { useAssistantApp } from "../composables/useAssistantApp.js";
 
-// 聊天页是整个前端最核心的页面。
-// 它本身不直接写复杂业务逻辑，而是像“页面装配层”：
-// 1. 从 composable 里拿状态和方法
-// 2. 把状态分发给各个子组件
-// 3. 把子组件事件再转回 store 逻辑
+// 聊天页主要负责装配消息区、输入区和侧边栏。
+// 真正的会话同步逻辑放在 store 中，页面层只负责在合适的时机触发它。
 
 const router = useRouter();
+const route = useRoute();
 
 const {
   state,
@@ -94,17 +92,28 @@ const {
   toggleThinkingCollapsed,
   clearLastThinking,
   logout,
-  bootstrap,
+  ensureChatPageReady,
 } = useAssistantApp();
 
-onMounted(async () => {
-  // 页面挂载后先尝试恢复登录态和初始化聊天数据。
-  // 如果 token 无效或当前用户不存在，就回到登录页。
-  const ok = await bootstrap();
+async function syncChatPage() {
+  // 每次进入聊天页时都主动补一次当前页数据，
+  // 避免从其他导航页切回聊天页时仍然停留在旧状态。
+  const ok = await ensureChatPageReady();
   if (!ok || !state.user) {
     router.replace("/auth");
   }
-});
+}
+
+onMounted(syncChatPage);
+
+watch(
+  () => route.fullPath,
+  async (path) => {
+    if (path === "/chat") {
+      await syncChatPage();
+    }
+  }
+);
 
 async function onUploadFile(file) {
   try {

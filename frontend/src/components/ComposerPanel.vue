@@ -1,10 +1,10 @@
 <template>
   <div class="composer-wrap">
     <!-- 这两条状态说明只是给用户看的提示，不参与真实业务逻辑。 -->
-    <div class="status-strip">
+    <!-- <div class="status-strip">
       <span class="status-pill">记忆：最近消息 + 长期偏好记忆</span>
       <span class="status-pill">上传 PDF / DOCX / TXT 后可直接围绕文档提问</span>
-    </div>
+    </div> -->
 
     <!-- 当前会话如果已经绑定附件，就在输入区上方显示。 -->
     <div v-if="currentAttachment" class="attachment-banner">

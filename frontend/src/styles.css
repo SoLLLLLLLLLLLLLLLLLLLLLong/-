@@ -90,7 +90,8 @@ a {
 .field input,
 .composer textarea {
   width: 100%;
-  border: 1px solid var(--line);
+  height: 25px;
+  /* border: 1px solid var(--line); */
   background: rgba(218, 226, 247, 0.9);
   color: var(--text);
   border-radius: 14px;
@@ -198,8 +199,31 @@ a {
   font-size: 13px;
 }
 
-.sidebar-actions {
-  padding: 16px 22px;
+.brand-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.brand-user-row p {
+  margin: 0;
+  min-width: 0;
+}
+
+.brand-logout {
+  border: 0;
+  background: transparent;
+  color: #31577d;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 0;
+}
+
+.brand-logout:hover {
+  color: #1f466f;
 }
 
 .history {
@@ -209,6 +233,10 @@ a {
 }
 
 .history-item {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 14px;
   padding: 12px 14px;
   margin-bottom: 8px;
   border-radius: 16px;
@@ -227,13 +255,53 @@ a {
   margin-bottom: 6px;
 }
 
+.history-item-main {
+  min-width: 0;
+  flex: 1;
+}
+
 .history-item-meta {
   color: var(--text-soft);
   font-size: 12px;
 }
 
-.history-item-actions {
-  margin-top: 10px;
+.history-item-side-actions,
+.history-item-edit-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+}
+
+.history-item-side-actions {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.history-item:hover .history-item-side-actions,
+.history-item.active .history-item-side-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.history-item-text-action {
+  border: 0;
+  background: transparent;
+  color: #5d7694;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.history-item-text-action:hover {
+  color: #23476e;
+}
+
+.history-item-text-action.danger:hover {
+  color: #b34861;
 }
 
 .history-empty {
@@ -250,7 +318,7 @@ a {
 
 .chat-topbar {
   justify-content: space-between;
-  padding: 20px 28px;
+  padding: 8px 16px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.08);
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(10px);
@@ -347,7 +415,7 @@ a {
 }
 
 .composer-wrap {
-  padding: 18px 28px 28px;
+  padding: 1px 2px 2px;
   border-top: 1px solid rgba(148, 163, 184, 0.08);
   background: rgba(255, 255, 255, 0.18);
 }
@@ -1004,7 +1072,7 @@ a {
   background: rgba(255, 255, 255, 0.98);
   border: 1px solid #dfe8f2;
   border-radius: 14px;
-  min-height: 124px;
+  min-height: 80px;
 }
 
 .app-layout .empty-state {
@@ -1182,7 +1250,7 @@ a {
 
 .side-nav {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 8px;
   padding: 14px 22px 0;
 }
@@ -1198,17 +1266,57 @@ a {
   font-size: 13px;
 }
 
+.side-nav-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.side-nav-trigger.active {
+  color: #ffffff;
+  border-color: rgba(33, 73, 111, 0.36);
+  background: linear-gradient(135deg, #21496f 0%, #2e5f8d 100%);
+}
+
+.side-nav-arrow {
+  font-size: 12px;
+}
+
 .side-nav-link.router-link-active {
   color: #ffffff;
   border-color: rgba(33, 73, 111, 0.36);
   background: linear-gradient(135deg, #21496f 0%, #2e5f8d 100%);
 }
 
-.sidebar-search {
-  padding: 0 22px 14px;
+.chat-group-panel {
+  padding: 10px 0 0;
+}
+
+.chat-group-actions {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 10px;
+  padding: 0 0 12px;
+}
+
+.chat-create-btn {
+  width: 100%;
+}
+
+.chat-search-input {
+  width: 100%;
+  border: 1px solid #dfe8f2;
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
+  background: #ffffff;
+  color: #17304b;
 }
 
 .sidebar-search input,
+.chat-search-input,
 .workspace-create input,
 .settings-grid select,
 .settings-grid input {
@@ -1480,6 +1588,10 @@ a {
     flex-direction: column;
     align-items: stretch;
   }
+
+  .chat-group-actions {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Chat scroll and trace layout overrides */
@@ -1502,8 +1614,8 @@ a {
   top: 0;
   z-index: 3;
   display: grid;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .app-layout .messages-top-panels {
@@ -1519,12 +1631,8 @@ a {
   padding-bottom: 8px;
 }
 
-.trace-card {
-  overflow: hidden;
-}
-
 .trace-detail {
-  max-height: 220px;
+  max-height: 260px;
   overflow: auto;
 }
 

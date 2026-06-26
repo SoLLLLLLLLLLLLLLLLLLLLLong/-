@@ -9,18 +9,21 @@
         @keydown.enter.prevent="submitRename"
         @keydown.esc.prevent="cancelEdit"
       />
-      <div class="history-item-actions">
-        <button class="btn btn-primary" type="button" @click="submitRename">保存</button>
-        <button class="btn btn-ghost" type="button" @click="cancelEdit">取消</button>
+      <div class="history-item-edit-actions">
+        <button class="history-item-text-action" type="button" @click="submitRename">保存</button>
+        <button class="history-item-text-action" type="button" @click="cancelEdit">取消</button>
       </div>
     </div>
 
     <template v-else>
-      <div class="history-item-title">{{ item.title || "未命名会话" }}</div>
-      <div class="history-item-meta">{{ formatDate(item.updated_at || item.created_at) }}</div>
-      <div class="history-item-actions">
-        <button class="btn btn-ghost" type="button" @click.stop="startEdit">重命名</button>
-        <button class="btn btn-danger" type="button" @click.stop="$emit('delete', item.id)">
+      <div class="history-item-main">
+        <div class="history-item-title">{{ item.title || "未命名会话" }}</div>
+        <div class="history-item-meta">{{ formatDate(item.updated_at || item.created_at) }}</div>
+      </div>
+
+      <div class="history-item-side-actions">
+        <button class="history-item-text-action" type="button" @click.stop="startEdit">重命名</button>
+        <button class="history-item-text-action danger" type="button" @click.stop="$emit('delete', item.id)">
           删除
         </button>
       </div>

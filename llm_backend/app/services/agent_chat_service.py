@@ -170,6 +170,63 @@ class AgentChatService:
             }
         )
 
+    def _tool_display_name(self, tool_name: str) -> str:
+        mapping = {
+            self.SEARCH_TOOL: "联网搜索",
+            self.DOCUMENT_TOOL: "文档检索",
+            self.WORKSPACE_TOOL: "工作区检索",
+            self.WEATHER_TOOL: "天气查询",
+        }
+        return mapping.get(tool_name, tool_name or "工具执行")
+
+    def _build_tool_progress_detail(self, tool_result: ToolExecutionResult) -> str:
+        lines = [tool_result.summary]
+
+        if tool_result.sources:
+            lines.append("结果预览：")
+            for index, item in enumerate(tool_result.sources[:2], start=1):
+                title = (
+                    item.get("title")
+                    or item.get("source")
+                    or item.get("city")
+                    or item.get("url")
+                    or "结果"
+                )
+                snippet = (
+                    item.get("snippet")
+                    or item.get("content")
+                    or item.get("summary")
+                    or ""
+                )
+                snippet = str(snippet).replace("\n", " ").strip()
+                if len(snippet) > 100:
+                    snippet = f"{snippet[:100]}..."
+                lines.append(f"{index}. {title}")
+                if snippet:
+                    lines.append(f"   {snippet}")
+
+        if tool_result.notes:
+            lines.append(f"备注：{tool_result.notes[0]}")
+
+        return "\n".join(lines)
+
+    def _should_show_verbose_trace(
+        self,
+        plan: RouterPlan,
+        query: str,
+        options: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        source_type = str((options or {}).get("knowledge_source_type") or "")
+        if plan.tools:
+            return True
+        if plan.route != "chat":
+            return True
+        if source_type == "workspace":
+            return True
+        if self._looks_like_code_query(query):
+            return True
+        return False
+
     def _latest_user_message(self, messages: List[Dict[str, str]]) -> str:
         for message in reversed(messages):
             if message.get("role") == "user":
@@ -805,39 +862,56 @@ class AgentChatService:
             notes=["天气信息为实时外部数据。"],
         )
 
-    async def _run_research_agent(
+    async def _stream_research_agent(
         self,
         plan: RouterPlan,
         *,
         query: str,
         index_id: Optional[str],
         trace: TraceRecorder,
+        result_holder: Dict[str, ResearchResult],
         should_stop: Optional[Callable[[], Awaitable[bool]]] = None,
-    ) -> ResearchResult:
-        # Research Agent 只负责拿证据和整理证据，不负责最终面向用户的表达。
+    ) -> AsyncGenerator[str, None]:
+        # 这里改成真正的 SSE 过程流：
+        # 每个工具开始、完成、整理结果时，都会立刻向前端推一条 trace 事件。
         result = ResearchResult(route=plan.route)
+        result_holder["result"] = result
 
         if not plan.tools:
             result.research_notes.append("本轮问题不需要调用外部工具，Research Agent 跳过工具执行。")
-            return result
+            yield self._emit_trace(
+                stage="research",
+                title="工具执行",
+                detail="本轮无需调用外部工具，直接进入答案整合阶段。",
+                status="completed",
+            )
+            return
 
         for tool_name in plan.tools:
             if await self._is_cancelled(should_stop):
                 result.research_notes.append("用户已中断，本轮工具执行提前结束。")
-                return result
+                yield self._emit_trace(
+                    stage="research",
+                    title="工具执行中断",
+                    detail="用户已手动停止，本轮工具执行提前结束。",
+                    status="failed",
+                    tool=tool_name,
+                )
+                return
 
-            if tool_name == self.SEARCH_TOOL:
+            title = self._tool_display_name(tool_name)
+            yield self._emit_trace(
+                stage="research",
+                title=title,
+                detail=f"{title}已开始，正在获取外部信息。",
+                status="running",
+                tool=tool_name,
+            )
+
+            if tool_name in {self.SEARCH_TOOL, self.WEATHER_TOOL}:
                 operation = lambda: self.tool_registry.execute(tool_name, query)
-                title = "联网搜索"
-            elif tool_name == self.WEATHER_TOOL:
-                operation = lambda: self.tool_registry.execute(tool_name, query)
-                title = "天气查询"
-            elif tool_name == self.WORKSPACE_TOOL:
-                operation = lambda: self.tool_registry.execute(tool_name, query, index_id)
-                title = "工作区检索"
             else:
                 operation = lambda: self.tool_registry.execute(tool_name, query, index_id)
-                title = "文档检索"
 
             tool_result = await self._execute_with_retry(
                 operation,
@@ -852,23 +926,37 @@ class AgentChatService:
             result.research_notes.extend(tool_result.notes)
 
             if tool_result.success:
+                detail = self._build_tool_progress_detail(tool_result)
                 trace.add_step(
                     title,
-                    tool_result.summary,
+                    detail,
                     stage="research",
                     status="completed",
                     tool=tool_name,
                 )
+                yield self._emit_trace(
+                    stage="research",
+                    title=title,
+                    detail=detail,
+                    status="completed",
+                    tool=tool_name,
+                )
             else:
+                detail = tool_result.error or tool_result.summary
                 trace.add_step(
                     title,
-                    tool_result.error or tool_result.summary,
+                    detail,
                     stage="research",
                     status="failed",
                     tool=tool_name,
                 )
-
-        return result
+                yield self._emit_trace(
+                    stage="research",
+                    title=title,
+                    detail=detail,
+                    status="failed",
+                    tool=tool_name,
+                )
 
     async def _run_code_agent(
         self,
@@ -1033,20 +1121,12 @@ class AgentChatService:
         trace = TraceRecorder(user_id, conversation_id, query)
 
         try:
-            # 第一步先给前端一个“正在规划”的事件，
-            # 这样页面不会在等待模型响应时完全没有反馈。
-            yield self._emit_trace(
-                stage="planning",
-                title="任务分析",
-                detail="Router Agent 正在分析问题并生成计划。",
-                status="running",
-            )
-
             plan = await self.route_query(
                 query,
                 has_index=bool(index_id),
                 options=options,
             )
+            verbose_trace = self._should_show_verbose_trace(plan, query, options)
             trace.set_route(plan.route)
             trace.add_step(
                 "任务规划",
@@ -1069,6 +1149,7 @@ class AgentChatService:
                         "tools": plan.tools,
                         "answer_style": plan.answer_style,
                         "confidence": plan.confidence,
+                        "verbose_trace": verbose_trace,
                     },
                 }
             )
@@ -1079,25 +1160,37 @@ class AgentChatService:
                     "reason": plan.reason,
                 }
             )
-            yield self._emit_trace(
-                stage="planning",
-                title="执行计划",
-                detail=(
-                    f"目标：{plan.objective}\n"
-                    f"工具：{', '.join(plan.tools) or '无'}\n"
-                    f"风格：{plan.answer_style}\n"
-                    f"置信度：{plan.confidence:.2f}"
-                ),
-                status="completed",
-            )
+            if verbose_trace:
+                yield self._emit_trace(
+                    stage="planning",
+                    title="路由决策",
+                    detail=f"本轮选择 {plan.route} 路径，原因：{plan.reason}",
+                    status="completed",
+                )
+                yield self._emit_trace(
+                    stage="planning",
+                    title="执行计划",
+                    detail=(
+                        f"目标：{plan.objective}\n"
+                        f"工具：{', '.join(plan.tools) or '无'}\n"
+                        f"风格：{plan.answer_style}\n"
+                        f"置信度：{plan.confidence:.2f}"
+                    ),
+                    status="completed",
+                )
 
-            research_result = await self._run_research_agent(
+            research_holder: Dict[str, ResearchResult] = {}
+            async for event in self._stream_research_agent(
                 plan,
                 query=query,
                 index_id=index_id,
                 trace=trace,
+                result_holder=research_holder,
                 should_stop=should_stop,
-            )
+            ):
+                if verbose_trace:
+                    yield event
+            research_result = research_holder.get("result", ResearchResult(route=plan.route))
 
             if await self._is_cancelled(should_stop):
                 await trace.save(status="cancelled")
@@ -1115,13 +1208,14 @@ class AgentChatService:
 
             code_review = CodeReviewResult(enabled=False)
             if self._should_enable_code_agent(query, messages, plan, options):
-                yield self._emit_trace(
-                    stage="research",
-                    title="代码检查",
-                    detail="Code Agent 正在检查代码思路、整理代码块格式并补充风险提示。",
-                    status="running",
-                    tool="code_agent",
-                )
+                if verbose_trace:
+                    yield self._emit_trace(
+                        stage="research",
+                        title="代码检查",
+                        detail="Code Agent 正在检查代码思路、整理代码块格式并补充风险提示。",
+                        status="running",
+                        tool="code_agent",
+                    )
                 code_review = await self._run_code_agent(
                     query=query,
                     messages=messages,
@@ -1136,16 +1230,17 @@ class AgentChatService:
                     status="completed",
                     tool="code_agent",
                 )
-                yield self._emit_trace(
-                    stage="research",
-                    title="代码检查",
-                    detail=(
-                        f"{code_review.summary}\n"
-                        f"格式化器：{code_review.formatter_used or '未命中可用格式化器，保留模型整理结果。'}"
-                    ),
-                    status="completed",
-                    tool="code_agent",
-                )
+                if verbose_trace:
+                    yield self._emit_trace(
+                        stage="research",
+                        title="代码检查",
+                        detail=(
+                            f"{code_review.summary}\n"
+                            f"格式化器：{code_review.formatter_used or '未命中可用格式化器，保留模型整理结果。'}"
+                        ),
+                        status="completed",
+                        tool="code_agent",
+                    )
 
             prompt_messages = self._build_response_messages(
                 messages,
@@ -1155,12 +1250,13 @@ class AgentChatService:
                 user_profile=user_profile,
                 code_review=code_review,
             )
-            yield self._emit_trace(
-                stage="response",
-                title="答案整合",
-                detail="Response Agent 正在整合计划、证据、代码检查结果、会话记忆和用户偏好。",
-                status="running",
-            )
+            if verbose_trace:
+                yield self._emit_trace(
+                    stage="response",
+                    title="开始生成",
+                    detail="已进入正文流式输出阶段。",
+                    status="running",
+                )
 
             full_response: List[str] = []
             async for delta in self._stream_answer(
@@ -1189,12 +1285,13 @@ class AgentChatService:
                         stage="memory",
                         status="completed",
                     )
-                    yield self._emit_trace(
-                        stage="memory",
-                        title="记忆更新",
-                        detail=f"本轮已提取并更新 {len(memory_updates)} 条用户偏好记忆。",
-                        status="completed",
-                    )
+                    if verbose_trace:
+                        yield self._emit_trace(
+                            stage="memory",
+                            title="记忆更新",
+                            detail=f"本轮已提取并更新 {len(memory_updates)} 条用户偏好记忆。",
+                            status="completed",
+                        )
 
             if on_complete and answer_text:
                 await on_complete(

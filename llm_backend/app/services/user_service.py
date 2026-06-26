@@ -1,75 +1,80 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
-from app.models.user import User
-from app.schemas.user import UserCreate
-from app.core.hashing import get_password_hash, verify_password
 from datetime import datetime
 from typing import Optional
+
+from sqlalchemy import or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.hashing import get_password_hash, verify_password
 from app.core.logger import get_logger
+from app.models.user import User
+from app.schemas.user import UserCreate
 
 logger = get_logger(service="user_service")
 
-class UserService:
-    def __init__(self, db: AsyncSession):
-        self.db = db
 
-    async def create_user(self, user_data: UserCreate) -> User:
-        # 同时检查用户名和邮箱是否已存在
+class UserService:
+    # 这里改成“静态方法 + 显式传入 db”的写法，
+    # 这样更适合你当前项目的接口层调用方式：
+    # UserService.create_user(db, user_data)
+
+    @staticmethod
+    async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
+        # 同时检查邮箱和用户名是否重复。
         query = select(User).where(
             or_(
                 User.email == user_data.email,
-                User.username == user_data.username
+                User.username == user_data.username,
             )
         )
-        result = await self.db.execute(query)
-        existing_user = result.scalar_one_or_none() # 获取查询结果中的第一个用户，如果存在则返回，否则返回 None
-        
+        result = await db.execute(query)
+        existing_user = result.scalar_one_or_none()
+
         if existing_user:
             if existing_user.email == user_data.email:
-                raise ValueError("该邮箱已经被注册！")
-            else:
-                raise ValueError("用户名已被占用！")
-        
-        # 创建新用户
+                raise ValueError("该邮箱已经被注册")
+            raise ValueError("用户名已被占用")
+
         db_user = User(
             username=user_data.username,
             email=user_data.email,
-            password_hash=get_password_hash(user_data.password)
+            password_hash=get_password_hash(user_data.password),
         )
-        self.db.add(db_user)
-        await self.db.commit()
-        await self.db.refresh(db_user)
+        db.add(db_user)
+        await db.commit()
+        await db.refresh(db_user)
         return db_user
 
-    async def authenticate_user(self, email: str, password: str) -> Optional[User]:
-        """
-        验证用户
-        password: 前端传来的 SHA256 哈希密码
-        """
+    @staticmethod
+    async def authenticate_user(
+        db: AsyncSession,
+        email: str,
+        password: str,
+    ) -> Optional[User]:
+        # 登录时先按邮箱查用户，再校验密码哈希。
         query = select(User).where(User.email == email)
-        result = await self.db.execute(query)
-        user = result.scalar_one_or_none()  # 获取查询结果中的第一个用户，如果存在则返回，否则返回 None
-        
+        result = await db.execute(query)
+        user = result.scalar_one_or_none()
+
         if not user:
             logger.warning(f"User not found: {email}")
             return None
-            
+
         if not verify_password(password, user.password_hash):
             logger.warning(f"Invalid password for user: {email}")
             return None
-            
-        # 更新最后登录时间
+
         user.last_login = datetime.utcnow()
-        await self.db.commit()
-        
+        await db.commit()
         return user
 
-    async def get_user_by_id(self, user_id: int) -> Optional[User]:
+    @staticmethod
+    async def get_user_by_id(db: AsyncSession, user_id: int) -> Optional[User]:
         query = select(User).where(User.id == user_id)
-        result = await self.db.execute(query)
+        result = await db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_user_by_email(self, email: str) -> Optional[User]:
+    @staticmethod
+    async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
         query = select(User).where(User.email == email)
-        result = await self.db.execute(query)
-        return result.scalar_one_or_none() 
+        result = await db.execute(query)
+        return result.scalar_one_or_none()

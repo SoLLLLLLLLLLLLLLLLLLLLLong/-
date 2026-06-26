@@ -129,7 +129,8 @@ function summarizeSources(items) {
     return "本轮没有拿到可用的外部证据。";
   }
 
-  return items
+  const preview = items
+    .slice(0, 3)
     .map((item, index) => {
       if (item.url) {
         return `${index + 1}. ${item.title || item.url}`;
@@ -138,12 +139,20 @@ function summarizeSources(items) {
       return `${index + 1}. ${item.source || "文档片段"}（页码：${page}）`;
     })
     .join("\n");
+
+  if (items.length <= 3) {
+    return preview;
+  }
+
+  return `${preview}\n... 共找到 ${items.length} 条来源，以上先展示前 3 条。`;
 }
 
 export const useAssistantStore = defineStore("assistant", () => {
   const state = reactive({
     token: localStorage.getItem("token") || "",
     user: null,
+    bootstrapped: false,
+    bootstrapPromise: null,
 
     conversations: [],
     conversationSearch: "",
@@ -361,18 +370,18 @@ export const useAssistantStore = defineStore("assistant", () => {
     }
   }
 
-  function setThinkingStatusByStage(stage, status) {
+function setThinkingStatusByStage(stage, status) {
     if (status === "failed") {
       state.thinkingStatus = "本轮有步骤执行失败，正在尝试恢复...";
       return;
     }
 
     const stageStatusMap = {
-      routing: "Router 正在规划执行步骤...",
-      planning: "Router 正在规划执行步骤...",
-      research: "Research Agent 正在调用工具并整理证据...",
-      response: "Response Agent 正在组织最终回答...",
-      memory: "Memory Agent 正在更新长期记忆...",
+      routing: "正在分析问题...",
+      planning: "正在分析问题...",
+      research: "正在检索信息...",
+      response: "正在生成回答...",
+      memory: "正在更新记忆...",
       recovery: "正在执行兜底恢复逻辑...",
     };
 
@@ -437,16 +446,24 @@ export const useAssistantStore = defineStore("assistant", () => {
       return;
     }
 
-    if (
-      ensureCurrent &&
-      !state.conversations.some((item) => item.id === state.currentConversationId)
-    ) {
+    const hasCurrentConversation = state.conversations.some(
+      (item) => item.id === state.currentConversationId
+    );
+
+    if (!state.currentConversationId || !hasCurrentConversation) {
       state.currentConversationId = state.conversations[0].id;
       localStorage.setItem("conversation_id", String(state.currentConversationId));
     }
 
     if (state.currentConversationId) {
-      await switchConversation(state.currentConversationId, false);
+      const shouldReloadMessages =
+        ensureCurrent ||
+        !state.messagesByConversation[state.currentConversationId] ||
+        !hasCurrentConversation;
+
+      if (shouldReloadMessages) {
+        await switchConversation(state.currentConversationId, false);
+      }
     }
   }
 
@@ -638,23 +655,39 @@ export const useAssistantStore = defineStore("assistant", () => {
   }
 
   async function handleCreateConversation() {
+    if (!state.user?.id) {
+      return null;
+    }
+
     const data = await createConversation(state.user.id);
-    state.currentConversationId = data.conversation_id;
-    localStorage.setItem("conversation_id", String(state.currentConversationId));
-    await refreshConversations(false);
-    await switchConversation(state.currentConversationId, false);
+    const conversationId = data.conversation_id;
+    const now = new Date().toISOString();
+
+    state.messagesByConversation[conversationId] = [];
+    state.conversations = [
+      {
+        id: conversationId,
+        title: "新对话",
+        created_at: now,
+        updated_at: now,
+        status: "active",
+        dialogue_type: "agent",
+        has_summary: false,
+      },
+      ...state.conversations.filter((item) => item.id !== conversationId),
+    ];
+
+    await switchConversation(conversationId, false);
+    refreshConversations(false).catch(() => {});
+    return conversationId;
   }
 
   async function ensureActiveConversation() {
     if (state.currentConversationId) {
       return state.currentConversationId;
     }
-    const data = await createConversation(state.user.id);
-    state.currentConversationId = data.conversation_id;
-    localStorage.setItem("conversation_id", String(state.currentConversationId));
-    state.messagesByConversation[state.currentConversationId] = [];
-    await refreshConversations(false);
-    return state.currentConversationId;
+
+    return handleCreateConversation();
   }
 
   async function selectConversation(id) {
@@ -806,14 +839,17 @@ export const useAssistantStore = defineStore("assistant", () => {
     }
   }
 
-  function handlePlanEvent(payload) {
+function handlePlanEvent(payload) {
     const plan = payload.plan || payload;
     state.routeLabel = formatRouteLabel(plan.route);
     state.routeReason = plan.reason || "";
-    openThinkingPanel("Router 正在规划执行步骤...");
+    openThinkingPanel(plan.verbose_trace ? "正在分析问题..." : "正在思考中...");
+    if (!plan.verbose_trace) {
+      return;
+    }
     upsertThinkingEntry({
       stage: "routing",
-      title: "Router 输出执行计划",
+      title: "执行计划",
       detail: [
         `目标：${plan.objective || "完成本轮问题处理"}`,
         `路由：${state.routeLabel}`,
@@ -832,9 +868,9 @@ export const useAssistantStore = defineStore("assistant", () => {
     upsertThinkingEntry(payload);
   }
 
-  function handleSourcesEvent(payload) {
+function handleSourcesEvent(payload) {
     state.sources = payload.sources || [];
-    openThinkingPanel("Research Agent 正在整理证据...");
+    openThinkingPanel("正在整理证据...");
     upsertThinkingEntry({
       stage: "research",
       title: "证据整理完成",
@@ -1155,14 +1191,49 @@ export const useAssistantStore = defineStore("assistant", () => {
   async function bootstrap() {
     localStorage.getItem(CURRENT_USER_CITY_KEY);
     if (!state.token) {
+      state.bootstrapped = false;
       return false;
     }
+
+    if (state.bootstrapped && state.user?.id) {
+      return true;
+    }
+
+    if (state.bootstrapPromise) {
+      return state.bootstrapPromise;
+    }
+
+    state.bootstrapPromise = (async () => {
+      try {
+        await bootstrapUser();
+        await refreshWeather();
+        state.bootstrapped = true;
+        return true;
+      } catch {
+        logout();
+        state.bootstrapped = false;
+        return false;
+      } finally {
+        state.bootstrapPromise = null;
+      }
+    })();
+
+    return state.bootstrapPromise;
+  }
+
+  async function ensureChatPageReady() {
+    const ok = await bootstrap();
+    if (!ok || !state.user?.id) {
+      return false;
+    }
+
     try {
-      await bootstrapUser();
+      await refreshConversations(true);
       await refreshWeather();
+      await scrollMessagesToBottom();
       return true;
     } catch {
-      logout();
+      state.bootstrapped = false;
       return false;
     }
   }
@@ -1208,6 +1279,7 @@ export const useAssistantStore = defineStore("assistant", () => {
     clearLastThinking,
     logout,
     bootstrap,
+    ensureChatPageReady,
     scrollMessagesToBottom,
   };
 });

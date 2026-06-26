@@ -1,26 +1,6 @@
 <template>
   <section class="messages-shell">
     <div id="messages" class="messages-scroll">
-      <!-- 顶部区域放“来源信息 + thinking / trace”，属于消息区内部的一部分。 -->
-      <div
-        v-if="sources.length || hasThinkingRecord"
-        class="messages-top-panels"
-        :class="{ active: thinkingVisible }"
-      >
-        <SourcesPanel :sources="sources" />
-
-        <ThinkingPanel
-          :visible="hasThinkingRecord"
-          :collapsed="thinkingCollapsed"
-          :is-active="thinkingVisible"
-          :status="activeThinkingStatus"
-          :logs="activeThinkingLogs"
-          @toggle="$emit('toggle-thinking')"
-          @clear="$emit('clear-thinking')"
-        />
-      </div>
-
-      <!-- 这里才是真正的聊天消息流。 -->
       <div v-if="messages.length" class="message-stream">
         <MessageBubble
           v-for="(message, idx) in messages"
@@ -34,6 +14,24 @@
       </div>
 
       <EmptyState v-else />
+
+      <div
+        v-if="sources.length || thinkingVisible"
+        class="messages-bottom-panels"
+        :class="{ active: thinkingVisible }"
+      >
+        <ThinkingPanel
+          :visible="thinkingVisible"
+          :collapsed="thinkingCollapsed"
+          :is-active="thinkingVisible"
+          :status="activeThinkingStatus"
+          :logs="activeThinkingLogs"
+          @toggle="$emit('toggle-thinking')"
+          @clear="$emit('clear-thinking')"
+        />
+
+        <SourcesPanel :sources="sources" />
+      </div>
     </div>
   </section>
 </template>
@@ -44,8 +42,8 @@ import MessageBubble from "./MessageBubble.vue";
 import SourcesPanel from "./SourcesPanel.vue";
 import ThinkingPanel from "./ThinkingPanel.vue";
 
-// MessageList 负责组织“消息区的整体结构”，
-// 它本身不决定业务逻辑，只负责把不同状态渲染成不同区域。
+// MessageList 负责组织消息流和消息区下方的辅助面板。
+// 这里把 thinking 面板放在消息流后面，这样会跟在 assistant 的“正在思考中...”下面显示。
 defineProps({
   sources: {
     type: Array,
@@ -100,19 +98,14 @@ defineEmits([
   overflow-x: hidden;
 }
 
-.messages-top-panels {
-  position: sticky;
-  top: 0;
-  z-index: 2;
+.messages-bottom-panels {
   display: grid;
   gap: 12px;
-  padding-bottom: 10px;
-  background: linear-gradient(180deg, rgba(247, 251, 255, 0.98) 0%, rgba(247, 251, 255, 0.92) 72%, rgba(247, 251, 255, 0) 100%);
-  backdrop-filter: blur(6px);
+  margin-top: 10px;
 }
 
-.messages-top-panels.active {
-  padding-bottom: 14px;
+.messages-bottom-panels.active {
+  margin-top: 12px;
 }
 
 .message-stream {
