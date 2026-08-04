@@ -1,0 +1,70 @@
+{
+  "pages": [
+    {
+      "path": "pages/home/index",
+      "style": {
+        "navigationBarTitleText": "AI创作工坊",
+        "navigationBarBackgroundColor": "#F7F9FF",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/avatar/create",
+      "style": {
+        "navigationBarTitleText": "数字人口播",
+        "navigationBarBackgroundColor": "#F7F9FF",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/image/index",
+      "style": {
+        "navigationBarTitleText": "AI图片",
+        "navigationBarBackgroundColor": "#F7F9FF",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/work/index",
+      "style": {
+        "navigationBarTitleText": "作品",
+        "navigationBarBackgroundColor": "#F7F9FF",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationBarBackgroundColor": "#F7F9FF",
+        "navigationBarTextStyle": "black"
+      }
+    }
+  ],
+  "tabBar": {
+    "color": "#8D93AD",
+    "selectedColor": "#5B63FF",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/work/index",
+        "text": "作品"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "AI创作工坊",
+    "navigationBarBackgroundColor": "#F7F9FF",
+    "backgroundColor": "#F7F9FF"
+  }
+}
