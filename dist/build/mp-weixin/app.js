@@ -1,0 +1,1 @@
+"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const e=require("./common/vendor.js");Math;const o={onLaunch(){console.log("AI创作工坊启动")}};function t(){return{app:e.createSSRApp(o)}}t().app.mount("#app"),exports.createApp=t;

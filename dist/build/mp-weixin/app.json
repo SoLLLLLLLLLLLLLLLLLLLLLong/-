@@ -1,0 +1,35 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/avatar/create",
+    "pages/work/index",
+    "pages/profile/index"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "AI创作工坊",
+    "navigationBarBackgroundColor": "#F7F9FF",
+    "backgroundColor": "#F7F9FF"
+  },
+  "tabBar": {
+    "color": "#8D93AD",
+    "selectedColor": "#5B63FF",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/work/index",
+        "text": "作品"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
+      }
+    ]
+  },
+  "usingComponents": {}
+}

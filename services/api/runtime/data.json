@@ -1,0 +1,128 @@
+{
+  "tasks": [
+    {
+      "id": "task_1784964503349_4jeyu8",
+      "type": "avatar",
+      "status": "success",
+      "workflowStatus": "done",
+      "progress": 100,
+      "payload": {},
+      "result": {
+        "previewUrl": "https://files.example.com/previews/brand-intro.mp4",
+        "coverUrl": "https://files.example.com/previews/brand-intro.jpg",
+        "downloadUrl": "https://files.example.com/exports/brand-intro.mp4",
+        "summary": "已完成 1080P 预览视频，可用于简历演示。",
+        "qualityScore": 91
+      },
+      "errorCode": "",
+      "errorMessage": "",
+      "title": "品牌介绍口播视频",
+      "userId": "guest-demo",
+      "retryable": false,
+      "failureStage": "",
+      "createdAt": "2026-07-25T07:28:23.349Z",
+      "updatedAt": "2026-07-25T07:28:23.350Z"
+    },
+    {
+      "id": "task_1784964503355_p12nil",
+      "type": "voice",
+      "status": "failed",
+      "workflowStatus": "failed",
+      "progress": 0,
+      "payload": {},
+      "result": null,
+      "errorCode": "PROVIDER_ERROR",
+      "errorMessage": "音色服务暂时不可用，请稍后重试。",
+      "title": "知识分享配音",
+      "userId": "guest-demo",
+      "retryable": true,
+      "failureStage": "voice_generation",
+      "createdAt": "2026-07-25T07:28:23.355Z",
+      "updatedAt": "2026-07-25T07:28:23.358Z"
+    }
+  ],
+  "works": [
+    {
+      "id": "work_1784964503349_4jeyu8",
+      "taskId": "task_1784964503349_4jeyu8",
+      "type": "avatar",
+      "title": "品牌介绍口播视频",
+      "status": "success",
+      "workflowStatus": "done",
+      "previewUrl": "https://files.example.com/previews/brand-intro.mp4",
+      "coverUrl": "https://files.example.com/previews/brand-intro.jpg",
+      "downloadUrl": "https://files.example.com/exports/brand-intro.mp4",
+      "sourceImageUrl": "",
+      "qualityScore": 91,
+      "failureStage": "",
+      "retryable": false,
+      "result": {
+        "previewUrl": "https://files.example.com/previews/brand-intro.mp4",
+        "coverUrl": "https://files.example.com/previews/brand-intro.jpg",
+        "downloadUrl": "https://files.example.com/exports/brand-intro.mp4",
+        "summary": "已完成 1080P 预览视频，可用于简历演示。",
+        "qualityScore": 91
+      },
+      "errorMessage": "",
+      "userId": "guest-demo",
+      "createdAt": "2026-07-25T07:28:23.349Z",
+      "updatedAt": "2026-07-25T07:28:23.350Z"
+    },
+    {
+      "id": "work_1784964503355_p12nil",
+      "taskId": "task_1784964503355_p12nil",
+      "type": "voice",
+      "title": "知识分享配音",
+      "status": "failed",
+      "workflowStatus": "failed",
+      "previewUrl": "",
+      "coverUrl": "",
+      "downloadUrl": "",
+      "sourceImageUrl": "",
+      "qualityScore": 0,
+      "failureStage": "voice_generation",
+      "retryable": true,
+      "result": null,
+      "errorMessage": "音色服务暂时不可用，请稍后重试。",
+      "userId": "guest-demo",
+      "createdAt": "2026-07-25T07:28:23.355Z",
+      "updatedAt": "2026-07-25T07:28:23.358Z"
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset_1784964503518_btf5sy",
+      "userId": "guest-demo",
+      "uploadId": "upload_1784964503518",
+      "objectKey": "user/guest-demo/avatar-assets/1784964503518_face-demo.jpg",
+      "fileName": "face-demo.jpg",
+      "mimeType": "image/jpeg",
+      "size": 345678,
+      "width": 1080,
+      "height": 1440,
+      "quality": {
+        "qualityScore": 100,
+        "checks": {
+          "hasSingleFace": true,
+          "frontFacing": true,
+          "notOccluded": true,
+          "minResolution": true,
+          "mimeAllowed": true,
+          "sizeAllowed": true
+        },
+        "failureStage": "",
+        "failureReason": "",
+        "retryable": false,
+        "accepted": true
+      },
+      "createdAt": "2026-07-25T07:28:23.518Z",
+      "updatedAt": "2026-07-25T07:28:23.518Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "guest-demo",
+      "updatedAt": "2026-07-25T07:28:23.353Z"
+    }
+  ]
+}

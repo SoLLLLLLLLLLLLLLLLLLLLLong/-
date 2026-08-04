@@ -1,0 +1,10 @@
+{
+  "name": "@ai-creator-workshop/avatar-worker",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "python -m src.main --reload",
+    "start": "python -m src.main",
+    "check": "python -m compileall src"
+  }
+}

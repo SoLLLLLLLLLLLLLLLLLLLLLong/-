@@ -1,0 +1,20 @@
+{
+  "name": "ai-creator-workshop",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:miniprogram": "npm run dev:mp-weixin --workspace @ai-creator-workshop/miniprogram",
+    "build:miniprogram": "npm run build:mp-weixin --workspace @ai-creator-workshop/miniprogram",
+    "dev:api": "npm run dev --workspace @ai-creator-workshop/api",
+    "dev:avatar-worker": "npm run dev --workspace @ai-creator-workshop/avatar-worker",
+    "start:api": "npm run start --workspace @ai-creator-workshop/api",
+    "start:avatar-worker": "npm run start --workspace @ai-creator-workshop/avatar-worker",
+    "check:api": "npm run check --workspace @ai-creator-workshop/api",
+    "check:avatar-worker": "npm run check --workspace @ai-creator-workshop/avatar-worker"
+  }
+}
